@@ -1,6 +1,7 @@
 from collections import deque
 from decimal import Decimal
 from enum import Enum
+from typing import cast
 
 from order import Market, Order, OrderId, OrderType, Side
 from sortedcontainers import SortedDict
@@ -91,6 +92,20 @@ class OrderBook:
 
         self.__orders.pop(order_id)
         return order
+
+    def get_best_bid_price(self) -> Decimal | None:
+        if not self.__bids:
+            return None
+
+        (best_bid, _) = self.__bids.peekitem(-1)
+        return cast(Decimal, best_bid)
+
+    def get_best_ask_price(self) -> Decimal | None:
+        if not self.__asks:
+            return None
+
+        (best_ask, _) = self.__asks.peekitem(0)
+        return cast(Decimal, best_ask)
 
     @property
     def market(self) -> Market:
