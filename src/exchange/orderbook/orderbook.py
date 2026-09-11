@@ -1,8 +1,9 @@
-from collections import defaultdict, deque
+from collections import deque
 from decimal import Decimal
 from enum import Enum
 
 from order import Market, Order, OrderId, OrderType, Side
+from sortedcontainers import SortedDict
 
 
 class OrderBookErrors(Enum):
@@ -15,8 +16,8 @@ class OrderBookErrors(Enum):
 class OrderBook:
     def __init__(self, market: Market) -> None:
         self.__market: Market = market
-        self.__bids: defaultdict[Decimal, deque[Order]] = defaultdict(deque)
-        self.__asks: defaultdict[Decimal, deque[Order]] = defaultdict(deque)
+        self.__bids: SortedDict = SortedDict()
+        self.__asks: SortedDict = SortedDict()
         self.__orders: dict[OrderId, Order] = {}
 
     def add_order(
@@ -45,8 +46,14 @@ class OrderBook:
             self.__orders[order_id] = order
 
             if side == Side.BUY:
+                if price not in self.__bids:
+                    self.__bids[price] = deque()
+
                 self.__bids[price].append(order)
             else:
+                if price not in self.__asks:
+                    self.__asks[price] = deque()
+
                 self.__asks[price].append(order)
 
             # TODO: Match the Limit Order
@@ -73,8 +80,14 @@ class OrderBook:
 
             if order.side == Side.BUY:
                 self.__bids[order.price].remove(order)
+                # Delete price level if the queue is empty after order cancellation
+                if not self.__bids[order.price]:
+                    del self.__bids[order.price]
             else:
                 self.__asks[order.price].remove(order)
+                # Delete price level if the queue is empty after order cancellation
+                if not self.__asks[order.price]:
+                    del self.__asks[order.price]
 
         self.__orders.pop(order_id)
         return order
