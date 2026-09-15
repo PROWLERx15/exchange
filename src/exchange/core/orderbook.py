@@ -48,7 +48,7 @@ class OrderBook:
         # Add order to resting orders
         self._resting_orders[order.order_id] = order
 
-    def cancel_order(self, order_id: OrderId) -> bool:
+    def remove_order(self, order_id: OrderId) -> bool:
 
         if order_id not in self._resting_orders:
             return False
@@ -103,7 +103,7 @@ class OrderBook:
 
     def get_resting_order(self, order_id: OrderId) -> LimitOrder | None:
         return self._resting_orders.get(order_id)
-        
+
     @property
     def market(self) -> Market:
         return self._market
