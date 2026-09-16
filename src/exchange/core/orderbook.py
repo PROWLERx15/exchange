@@ -71,35 +71,19 @@ class OrderBook:
 
         return True
 
-    def get_best_ask_price(self) -> Decimal | None:
+    def get_best_ask(self) -> tuple[Decimal, LimitOrder] | None:
         if not self._asks:
             return None
 
-        (best_ask, _) = self._asks.peekitem(0)
-        return cast(Decimal, best_ask)
+        (best_ask, best_ask_queue) = self._asks.peekitem(0)
+        return cast(Decimal, best_ask), next(iter(best_ask_queue.values()))
 
-    def get_best_bid_price(self) -> Decimal | None:
+    def get_best_bid(self) -> tuple[Decimal, LimitOrder] | None:
         if not self._bids:
             return None
 
-        (best_bid, _) = self._bids.peekitem(-1)
-        return cast(Decimal, best_bid)
-
-    def get_best_ask_order(self) -> LimitOrder | None:
-        if not self._asks:
-            return None
-
-        (_, best_ask_queue) = self._asks.peekitem(0)
-
-        return next(iter(best_ask_queue.values()))
-
-    def get_best_bid_order(self) -> LimitOrder | None:
-        if not self._bids:
-            return None
-
-        (_, best_bid_queue) = self._bids.peekitem(-1)
-
-        return next(iter(best_bid_queue.values()))
+        (best_bid, best_bid_queue) = self._bids.peekitem(-1)
+        return cast(Decimal, best_bid), next(iter(best_bid_queue.values()))
 
     def get_resting_order(self, order_id: OrderId) -> LimitOrder | None:
         return self._resting_orders.get(order_id)

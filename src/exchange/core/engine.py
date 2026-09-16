@@ -32,68 +32,65 @@ class MatchingEngine:
 
         while incoming_order.quantity_remaining > 0:
             if incoming_order.side == Side.BUY:
-                best_ask = self._orderbook.get_best_ask_price()
+                best_ask = self._orderbook.get_best_ask()
 
                 # No Asks or Selling Price is high -> Nothing to match
-                if best_ask is None or incoming_order.price < best_ask:
+                if best_ask is None or incoming_order.price < best_ask[0]:
                     break
-                resting_order = self._orderbook.get_best_ask_order()
-                trade_price = best_ask
+                trade_price, resting_order = best_ask
             else:
-                best_bid = self._orderbook.get_best_bid_price()
+                best_bid = self._orderbook.get_best_bid()
 
                 # No Bids or Buying Price is low -> Nothing to match
-                if best_bid is None or incoming_order.price > best_bid:
+                if best_bid is None or incoming_order.price > best_bid[0]:
                     break
-                resting_order = self._orderbook.get_best_bid_order()
-                trade_price = best_bid
+                trade_price, resting_order = best_bid
 
-            if resting_order is not None:
-                trade_quantity = min(
-                    incoming_order.quantity_remaining, resting_order.quantity_remaining
-                )
+            trade_quantity = min(
+                incoming_order.quantity_remaining, resting_order.quantity_remaining
+            )
 
-                # Update the Incoming Order
-                incoming_order.quantity_remaining -= trade_quantity
-                incoming_order.quantity_executed += trade_quantity
+            # Update the Incoming Order
+            incoming_order.quantity_remaining -= trade_quantity
+            incoming_order.quantity_executed += trade_quantity
 
-                if incoming_order.quantity_remaining == 0:
-                    incoming_order.execution_status = ExecutionStatus.FILLED
-                    incoming_order.order_status = OrderStatus.COMPLETED
-                else:
-                    incoming_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
+            if incoming_order.quantity_remaining == 0:
+                incoming_order.execution_status = ExecutionStatus.FILLED
+                incoming_order.order_status = OrderStatus.COMPLETED
+            else:
+                incoming_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
 
-                # Update the Resting Order
-                resting_order.quantity_remaining -= trade_quantity
-                resting_order.quantity_executed += trade_quantity
+            # Update the Resting Order
+            resting_order.quantity_remaining -= trade_quantity
+            resting_order.quantity_executed += trade_quantity
 
-                # if the resting limit order is filled then pop it from the queue
-                if resting_order.quantity_remaining == 0:
-                    resting_order.order_status = OrderStatus.COMPLETED
-                    resting_order.execution_status = ExecutionStatus.FILLED
-                    self._orderbook.remove_order(resting_order.order_id)
-                else:
-                    resting_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
+            # if the resting limit order is filled then pop it from the queue
+            if resting_order.quantity_remaining == 0:
+                resting_order.order_status = OrderStatus.COMPLETED
+                resting_order.execution_status = ExecutionStatus.FILLED
+                self._orderbook.remove_order(resting_order.order_id)
+            else:
+                resting_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
 
-                buy_order_id = (
-                    incoming_order.order_id
-                    if incoming_order.side == Side.BUY
-                    else resting_order.order_id
-                )
-                sell_order_id = (
-                    incoming_order.order_id
-                    if incoming_order.side == Side.SELL
-                    else resting_order.order_id
-                )
+            buy_order_id = (
+                incoming_order.order_id
+                if incoming_order.side == Side.BUY
+                else resting_order.order_id
+            )
+            sell_order_id = (
+                incoming_order.order_id
+                if incoming_order.side == Side.SELL
+                else resting_order.order_id
+            )
 
-                trade = self._create_trade(
-                    buy_order_id,
-                    sell_order_id,
-                    trade_quantity,
-                    trade_price,
-                    timestamp=incoming_order.creation_timestamp,
-                )
-                trades.append(trade)
+            trade = self._create_trade(
+                buy_order_id,
+                sell_order_id,
+                trade_quantity,
+                trade_price,
+                timestamp=incoming_order.creation_timestamp,
+            )
+            trades.append(trade)
 
         # Incoming Order rests in the orderbook in these 2 cases:
         # - Price Condition Fails, no compatible price to match the order
@@ -109,68 +106,65 @@ class MatchingEngine:
 
         while incoming_order.quantity_remaining > 0:
             if incoming_order.side == Side.BUY:
-                best_ask = self._orderbook.get_best_ask_price()
+                best_ask = self._orderbook.get_best_ask()
 
                 # No Asks -> Nothing to match
                 if best_ask is None:
                     break
-                resting_order = self._orderbook.get_best_ask_order()
-                trade_price = best_ask
+                trade_price, resting_order = best_ask
             else:
-                best_bid = self._orderbook.get_best_bid_price()
+                best_bid = self._orderbook.get_best_bid()
 
                 # No Bids -> Nothing to match
                 if best_bid is None:
                     break
-                resting_order = self._orderbook.get_best_bid_order()
-                trade_price = best_bid
+                trade_price, resting_order = best_bid
 
-            if resting_order is not None:
-                trade_quantity = min(
-                    incoming_order.quantity_remaining, resting_order.quantity_remaining
-                )
+            trade_quantity = min(
+                incoming_order.quantity_remaining, resting_order.quantity_remaining
+            )
 
-                # Update the Incoming Order
-                incoming_order.quantity_remaining -= trade_quantity
-                incoming_order.quantity_executed += trade_quantity
+            # Update the Incoming Order
+            incoming_order.quantity_remaining -= trade_quantity
+            incoming_order.quantity_executed += trade_quantity
 
-                if incoming_order.quantity_remaining == 0:
-                    incoming_order.execution_status = ExecutionStatus.FILLED
-                    incoming_order.order_status = OrderStatus.COMPLETED
-                else:
-                    incoming_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
+            if incoming_order.quantity_remaining == 0:
+                incoming_order.execution_status = ExecutionStatus.FILLED
+                incoming_order.order_status = OrderStatus.COMPLETED
+            else:
+                incoming_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
 
-                # Update the Resting Order
-                resting_order.quantity_remaining -= trade_quantity
-                resting_order.quantity_executed += trade_quantity
+            # Update the Resting Order
+            resting_order.quantity_remaining -= trade_quantity
+            resting_order.quantity_executed += trade_quantity
 
-                # if the resting limit order is filled then pop it from the queue
-                if resting_order.quantity_remaining == 0:
-                    resting_order.order_status = OrderStatus.COMPLETED
-                    resting_order.execution_status = ExecutionStatus.FILLED
-                    self._orderbook.remove_order(resting_order.order_id)
-                else:
-                    resting_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
+            # if the resting limit order is filled then pop it from the queue
+            if resting_order.quantity_remaining == 0:
+                resting_order.order_status = OrderStatus.COMPLETED
+                resting_order.execution_status = ExecutionStatus.FILLED
+                self._orderbook.remove_order(resting_order.order_id)
+            else:
+                resting_order.execution_status = ExecutionStatus.PARTIALLY_FILLED
 
-                buy_order_id = (
-                    incoming_order.order_id
-                    if incoming_order.side == Side.BUY
-                    else resting_order.order_id
-                )
-                sell_order_id = (
-                    incoming_order.order_id
-                    if incoming_order.side == Side.SELL
-                    else resting_order.order_id
-                )
+            buy_order_id = (
+                incoming_order.order_id
+                if incoming_order.side == Side.BUY
+                else resting_order.order_id
+            )
+            sell_order_id = (
+                incoming_order.order_id
+                if incoming_order.side == Side.SELL
+                else resting_order.order_id
+            )
 
-                trade = self._create_trade(
-                    buy_order_id,
-                    sell_order_id,
-                    trade_quantity,
-                    trade_price,
-                    timestamp=incoming_order.creation_timestamp,
-                )
-                trades.append(trade)
+            trade = self._create_trade(
+                buy_order_id,
+                sell_order_id,
+                trade_quantity,
+                trade_price,
+                timestamp=incoming_order.creation_timestamp,
+            )
+            trades.append(trade)
 
         # Market Orders never rest in the orderbook
         #  If there is quantity remaining, it means the opposite side of the
