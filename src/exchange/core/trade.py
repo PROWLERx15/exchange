@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
-from core.order import OrderId
+from src.exchange.core.order import OrderId
 
 
 @dataclass(frozen=True)

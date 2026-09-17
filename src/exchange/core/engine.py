@@ -27,7 +27,7 @@ class MatchingEngine:
         elif isinstance(incoming_order, MarketOrder):
             return self._match_market_order(incoming_order)
 
-    def _match_limit_order(self, incoming_order: LimitOrder):
+    def _match_limit_order(self, incoming_order: LimitOrder) -> list[Trade] | None:
         trades = []
 
         while incoming_order.quantity_remaining > 0:
@@ -101,7 +101,7 @@ class MatchingEngine:
 
         return trades if len(trades) > 0 else None
 
-    def _match_market_order(self, incoming_order: MarketOrder):
+    def _match_market_order(self, incoming_order: MarketOrder) -> list[Trade] | None:
         trades = []
 
         while incoming_order.quantity_remaining > 0:
